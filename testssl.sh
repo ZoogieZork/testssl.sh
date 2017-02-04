@@ -1834,9 +1834,12 @@ run_allciphers() {
      local sslv2_supported=false
 
      # get a list of all the cipher suites to test (only need the hexcode, ciph, sslvers, kx, enc, and export values)
+     ociphers_tmp="$(mktemp "$TEMPDIR/all_ociphers.XXXXXX")" || return 7
+     $OPENSSL ciphers -V 'ALL:COMPLEMENTOFALL:@STRENGTH' >"$ociphers_tmp" 2>>$ERRFILE
      while read hexcode[nr_ciphers] n ciph[nr_ciphers] sslvers[nr_ciphers] kx[nr_ciphers] auth enc[nr_ciphers] mac export2[nr_ciphers]; do
           nr_ciphers=$nr_ciphers+1
-     done < <($OPENSSL ciphers -V 'ALL:COMPLEMENTOFALL:@STRENGTH' 2>>$ERRFILE)
+     done < "$ociphers_tmp"
+     rm -f -- "$ociphers_tmp"
 
      outln
      pr_headlineln " Testing all $OPENSSL_NR_CIPHERS locally available ciphers against the server, ordered by encryption strength "
