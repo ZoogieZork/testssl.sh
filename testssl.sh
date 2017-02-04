@@ -7161,7 +7161,10 @@ run_beast(){
                fi
           fi
           for ciph in $(colon_to_spaces "$cbc_cipher_list"); do
-               read hexcode dash cbc_cipher sslvers kx auth enc mac < <($OPENSSL ciphers -V "$ciph" 2>>$ERRFILE)        # -V doesn't work with openssl < 1.0
+               ociphers_tmp="$(mktemp "$TEMPDIR/beast_ociphers.XXXXXX")" || return 7
+               $OPENSSL ciphers -V "$ciph" >"$ociphers_tmp" 2>>$ERRFILE
+               read hexcode dash cbc_cipher sslvers kx auth enc mac < "$ociphers_tmp"
+               rm -f -- "$ociphers_tmp"
                #                                                    ^^^^^ process substitution as shopt will either segfault or doesn't work with old bash versions
                $OPENSSL s_client -cipher "$cbc_cipher" -"$proto" $STARTTLS $BUGS -connect $NODEIP:$PORT $PROXY $addcmd >$TMPFILE 2>>$ERRFILE </dev/null
                sclient_connect_successful $? $TMPFILE
