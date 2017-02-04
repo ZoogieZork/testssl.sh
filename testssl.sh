@@ -7305,6 +7305,8 @@ run_rc4() {
                outln "\n"
                neat_header
           fi
+          ociphers_tmp="$(mktemp "$TEMPDIR/rc4_ociphers.XXXXXX")" || return 7
+          $OPENSSL ciphers -V $rc4_ciphers_list:@STRENGTH >"$ociphers_tmp"
           while read hexcode dash rc4_cipher sslvers kx auth enc mac; do
                if [[ "$sslvers" == "SSLv2" ]]; then
                     $OPENSSL s_client -cipher $rc4_cipher $STARTTLS $BUGS -connect $NODEIP:$PORT $PROXY -ssl2 </dev/null >$TMPFILE 2>$ERRFILE
@@ -7335,7 +7337,8 @@ run_rc4() {
                     [[ $sclient_success -eq 0 ]] && pr_svrty_high "$rc4_cipher "
                fi
                [[ $sclient_success -eq 0 ]] && rc4_detected+="$rc4_cipher "
-          done < <($OPENSSL ciphers -V $rc4_ciphers_list:@STRENGTH)
+          done < "$ociphers_tmp"
+          rm -f -- "$ociphers_tmp"
           outln
           "$WIDE" && pr_svrty_high "VULNERABLE (NOT ok)"
           fileout "rc4" "NOT ok" "RC4 (CVE-2013-2566, CVE-2015-2808) : VULNERABLE (NOT ok) Detected ciphers: $rc4_detected"
