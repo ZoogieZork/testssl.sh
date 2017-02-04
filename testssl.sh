@@ -5196,6 +5196,8 @@ run_pfs() {
           else
                out "          "
           fi
+          ociphers_tmp="$(mktemp "$TEMPDIR/pfs_ociphers.XXXXXX")" || return 7
+          $OPENSSL ciphers -V "$pfs_cipher_list" > "$ociphers_tmp" 2>$ERRFILE
           while read hexcode dash pfs_cipher sslvers kx auth enc mac; do
                tmpfile=$TMPFILE.$hexcode
                $OPENSSL s_client -cipher $pfs_cipher $STARTTLS $BUGS -connect $NODEIP:$PORT $PROXY $SNI &>$tmpfile </dev/null
@@ -5230,7 +5232,7 @@ run_pfs() {
                fi
                [[ $sclient_success -eq 0 ]] && pfs_ciphers+="$pfs_cipher "
                debugme rm $tmpfile
-          done < <($OPENSSL ciphers -V "$pfs_cipher_list" 2>$ERRFILE)      # -V doesn't work with openssl < 1.0
+          done < "$ociphers_tmp"
           debugme echo $pfs_offered
           "$WIDE" || outln
 
