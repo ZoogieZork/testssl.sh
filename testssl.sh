@@ -1977,9 +1977,12 @@ run_cipher_per_proto() {
           fi
           # get a list of all the cipher suites to test (only need the hexcode, ciph, kx, enc, and export values)
           nr_ciphers=0
+          ociphers_tmp="$(mktemp "$TEMPDIR/per_ociphers.XXXXXX")" || return 7
+          $OPENSSL ciphers $ossl_ciphers_proto -V 'ALL:COMPLEMENTOFALL:@STRENGTH' >"$ociphers_tmp" 2>$ERRFILE
           while read hexcode[nr_ciphers] n ciph[nr_ciphers] sslvers kx[nr_ciphers] auth enc[nr_ciphers] mac export2[nr_ciphers]; do
                nr_ciphers=$nr_ciphers+1
-          done < <($OPENSSL ciphers $ossl_ciphers_proto -V 'ALL:COMPLEMENTOFALL:@STRENGTH' 2>$ERRFILE)
+          done < "$ociphers_tmp"
+          rm -f -- "$ociphers_tmp"
 
           # Split ciphers into bundles of size 4**n, starting with the smallest
           # "n" that leaves the ciphers in one bundle, and then reducing "n" by
